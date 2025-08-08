@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MineWin Pro - Sign Up</title>
+  <style>
+    body {
+      background: #0b0c10;
+      color: #66fcf1;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .signup-box {
+      background: #1f2833;
+      padding: 25px;
+      border-radius: 8px;
+      width: 300px;
+      text-align: center;
+    }
+    h2 {
+      margin-bottom: 20px;
+    }
+    input {
+      width: 90%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 5px;
+      outline: none;
+    }
+    button {
+      background: #45a29e;
+      color: #0b0c10;
+      padding: 10px;
+      border: none;
+      width: 100%;
+      border-radius: 5px;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover {
+      background: #66fcf1;
+    }
+    a {
+      color: #66fcf1;
+      text-decoration: none;
+      display: block;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="signup-box">
+    <h2>Sign Up</h2>
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button onclick="signupUser()">Sign Up</button>
+    <a href="login.html">Already have an account? Login</a>
+  </div>
+
+  <script>
+    function signupUser() {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      if(!email || !password) {
+        alert("Please fill in all fields.");
+        return;
+      }
+
+      let users = JSON.parse(localStorage.getItem("users")) || [];
+
+      if(users.find(u => u.email === email)) {
+        alert("Email already registered.");
+        return;
+      }
+
+      users.push({
+        email: email,
+        password: password,
+        subscribed: false,
+        activationDate: null
+      });
+
+      localStorage.setItem("users", JSON.stringify(users));
+      alert("Signup successful! Please login.");
+      window.location.href = "login.html";
+    }
+  </script>
+
+</body>
+</html>
