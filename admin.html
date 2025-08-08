@@ -14,7 +14,7 @@
       text-align: center;
     }
     .user-list {
-      max-width: 600px;
+      max-width: 700px;
       margin: 0 auto;
       background: #1f2833;
       padding: 20px;
@@ -59,52 +59,95 @@
     </table>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js"></script>
+
   <script>
-    function loadUsers() {
-      let users = JSON.parse(localStorage.getItem("users")) || [];
-      const tbody = document.getElementById("userTableBody");
-      tbody.innerHTML = "";
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSMYvz0SnPHdaYhvf62_Ken_VxBcXwtQQ",
+      authDomain: "prominespredictor.firebaseapp.com",
+      projectId: "prominespredictor",
+      storageBucket: "prominespredictor.appspot.com",
+      messagingSenderId: "728630807816",
+      appId: "1:728630807816:web:81906ff848ad6817d630bd",
+      measurementId: "G-M8F885HTVW"
+    };
 
-      users.forEach((user, index) => {
-        const tr = document.createElement("tr");
+    // Initialize Firebase
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-        const activationDate = user.activationDate ? new Date(user.activationDate).toLocaleDateString() : "N/A";
-        const subscribed = user.subscribed ? "Yes" : "No";
+    const userTableBody = document.getElementById('userTableBody');
 
-        tr.innerHTML = `
-          <td>${user.email}</td>
-          <td>${subscribed}</td>
-          <td>${activationDate}</td>
-          <td>
-            ${user.subscribed 
-              ? `<button onclick="deactivateUser(${index})">Deactivate</button>`
-              : `<button onclick="activateUser(${index})">Activate</button>`}
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
+    // Load users from Firestore
+    async function loadUsers() {
+      userTableBody.innerHTML = 'Loading...';
+      try {
+        const snapshot = await db.collection('users').get();
+        userTableBody.innerHTML = '';
+
+        snapshot.forEach(doc => {
+          const user = doc.data();
+          const id = doc.id;
+          const subscribed = user.subscribed ? "Yes" : "No";
+          const activationDate = user.activationDate 
+            ? new Date(user.activationDate.seconds * 1000).toLocaleDateString() 
+            : "N/A";
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${user.email}</td>
+            <td>${subscribed}</td>
+            <td>${activationDate}</td>
+            <td>
+              ${user.subscribed 
+                ? `<button onclick="deactivateUser('${id}')">Deactivate</button>`
+                : `<button onclick="activateUser('${id}')">Activate</button>`}
+            </td>
+          `;
+          userTableBody.appendChild(tr);
+        });
+      } catch (error) {
+        userTableBody.innerHTML = 'Error loading users.';
+        console.error(error);
+      }
     }
 
-    function activateUser(index) {
-      let users = JSON.parse(localStorage.getItem("users")) || [];
-      users[index].subscribed = true;
-      users[index].activationDate = new Date().toISOString();
-      localStorage.setItem("users", JSON.stringify(users));
-      alert(`User ${users[index].email} activated!`);
-      loadUsers();
+    // Activate user in Firestore
+    async function activateUser(userId) {
+      try {
+        await db.collection('users').doc(userId).update({
+          subscribed: true,
+          activationDate: new Date()
+        });
+        alert("User activated!");
+        loadUsers();
+      } catch (error) {
+        alert("Error activating user.");
+        console.error(error);
+      }
     }
 
-    function deactivateUser(index) {
-      let users = JSON.parse(localStorage.getItem("users")) || [];
-      users[index].subscribed = false;
-      users[index].activationDate = null;
-      localStorage.setItem("users", JSON.stringify(users));
-      alert(`User ${users[index].email} deactivated!`);
-      loadUsers();
+    // Deactivate user in Firestore
+    async function deactivateUser(userId) {
+      try {
+        await db.collection('users').doc(userId).update({
+          subscribed: false,
+          activationDate: null
+        });
+        alert("User deactivated!");
+        loadUsers();
+      } catch (error) {
+        alert("Error deactivating user.");
+        console.error(error);
+      }
     }
 
-    // Load users on page load
+    // Initial load
     loadUsers();
   </script>
 </body>
 </html>
+      
