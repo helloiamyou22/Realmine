@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+  <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -65,52 +65,87 @@
     <a href="signup.html">Don't have an account? Sign Up</a>
   </div>
 
+  <!-- Firebase SDKs -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
   <script>
-    function loginUser() {
+    // Your Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyCSMYvz0SnPHdaYhvf62_Ken_VxBcXwtQQ",
+      authDomain: "prominespredictor.firebaseapp.com",
+      projectId: "prominespredictor",
+      storageBucket: "prominespredictor.appspot.com",
+      messagingSenderId: "728630807816",
+      appId: "1:728630807816:web:81906ff848ad6817d630bd",
+      measurementId: "G-M8F885HTVW"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    async function loginUser() {
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
 
-      let users = JSON.parse(localStorage.getItem("users")) || [];
-
-      let user = users.find(u => u.email === email && u.password === password);
-
-      if (!user) {
-        alert("Invalid email or password.");
+      if (!email || !password) {
+        alert("Please fill in all fields.");
         return;
       }
 
-      if(user.subscribed) {
-        if(user.activationDate) {
-          const activationDate = new Date(user.activationDate);
+      try {
+        const userRef = db.collection('users').doc(email);
+        const doc = await userRef.get();
+
+        if (!doc.exists) {
+          alert("Invalid email or password.");
+          return;
+        }
+
+        const user = doc.data();
+
+        if (user.password !== password) {
+          alert("Invalid email or password.");
+          return;
+        }
+
+        if (!user.subscribed) {
+          alert("Please subscribe to access the bot.");
+          window.location.href = "subscribe.html";
+          return;
+        }
+
+        if (user.activationDate) {
+          const activationDate = user.activationDate.toDate();
           const now = new Date();
           const diffDays = Math.floor((now - activationDate) / (1000 * 60 * 60 * 24));
-          if(diffDays >= 30) {
-            user.subscribed = false;
-            user.activationDate = null;
-            localStorage.setItem("users", JSON.stringify(users));
+          if (diffDays >= 30) {
+            // Subscription expired, deactivate user in Firestore
+            await userRef.update({
+              subscribed: false,
+              activationDate: null
+            });
             alert("Your subscription has expired. Please renew to continue.");
             window.location.href = "subscribe.html";
             return;
           }
         } else {
-          // Activation date missing, force resubscribe
-          user.subscribed = false;
-          localStorage.setItem("users", JSON.stringify(users));
           alert("Subscription info missing. Please subscribe.");
           window.location.href = "subscribe.html";
           return;
         }
-      } else {
-        alert("Please subscribe to access the bot.");
-        window.location.href = "subscribe.html";
-        return;
+
+        // Save logged in user email in sessionStorage (or localStorage if you want persistent)
+        sessionStorage.setItem("loggedInUser", email);
+
+        // Redirect to dashboard
+        window.location.href = "dashboard.html";
+
+      } catch (error) {
+        console.error("Error logging in:", error);
+        alert("Failed to login, try again later.");
       }
-
-      // Save logged in user in localStorage
-      localStorage.setItem("loggedInUser", JSON.stringify(user));
-
-      // Redirect to dashboard
-      window.location.href = "dashboard.html";
     }
   </script>
 
